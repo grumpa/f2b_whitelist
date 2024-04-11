@@ -2,6 +2,15 @@
 
 Automatic whitelist for fail2ban composed from successful logins.
 
+## Why
+
+Sometimes happens that we delete user account on mail server but admin forget
+to delete this accout from mail client.
+
+Mail client attempts to login into non-existent accout which reslutl in BAN IP by fail2ban.
+
+Other users from this IP are cut off from their mail because they are not able to login.
+
 ## How does it work
 
 - log login attempts in postfix/submission or imap-login into own log
@@ -22,13 +31,13 @@ Restart logrotate and rsyslog services.
 
 Rsyslog config file creates log file /var/log/gn_f2b_mail.log with imap and submission logins.
 
-This log is read by gn_f2b_whitelist_sqlite.py script. Script
+This log is read by gn_f2b_whitelist_sqlite.py script which:
 
-- updates slqite3 database saved in fail2ban/jail.d/gn_whitelist.db
+- updates sqlite3 database saved in fail2ban/jail.d/gn_whitelist.db
 - creates file gn-ignoreip.draft in jail.d/ directory.
 
 This draft file conatains IP adresses suitable for whitelisting.
-Draft file also contains comment explaining why particular IP was selected for whtielisting.
+Draft file also contains comments explaining why particular IP was selected for whtielisting.
 
 You can copy/paste IP list into your ignoreip.local config file. It is not done automatically.
 Script provides a draft. It's up to you decide if IP list is OK for you.
