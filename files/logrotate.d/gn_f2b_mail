@@ -1,0 +1,11 @@
+# Ansible managed
+
+/var/log/gn_f2b_mail.log {
+    weekly
+    create
+    rotate 1
+    missingok
+    prerotate
+        /usr/local/bin/gn_f2b_whitelist_sqlite.py
+    endscript
+}
