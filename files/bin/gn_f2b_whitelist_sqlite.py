@@ -178,7 +178,7 @@ class Whitelist:
                 backend = find_item['backend']
 
                 self.db_cursor.execute('INSERT INTO journal (timestamp, ip, username, backend) VALUES (?, ?, ?, ?)', (timestamp, ip, user, backend))
-                self.db_conn.commit()
+        self.db_conn.commit()
 
     def read_db_to_dict(self):
         """Read records from database to dictionary for easier processing"""
