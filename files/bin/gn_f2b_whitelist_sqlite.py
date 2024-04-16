@@ -23,6 +23,7 @@ from pathlib import Path
 import sqlite3
 import time
 from datetime import datetime, timedelta
+import subprocess
 
 # Oldest records in journal db table
 RECORDS_MAX_AGE = 30
@@ -80,6 +81,21 @@ def extract_between(text, first, last):
     end = text.index(last) if last else None
     return text[start:end]
 
+def whois_bits(ip):
+    """Return string with country code and netname from whois"""
+    sp = subprocess.run(('whois', ip), capture_output=True)
+    if sp.returncode != 0:
+        return ''
+    lines = sp.stdout.decode().splitlines()
+    country = ''
+    netname = ''
+    for line in lines:
+        line = line.lower()
+        if line.startswith('country'):
+            country = line.split(':')[1].strip()
+        elif line.startswith('netname:'):
+            netname = line.split(':')[1].strip()
+    return f'{country} {netname}'[:21]
 
 class Whitelist:
 
@@ -213,19 +229,19 @@ class Whitelist:
         self.comments += "# Hard whitelist\n\n"
         for key in rec_keys:
             if len(self.records[key]) > 3:
-                self.comments += f'    # {key:25} - {len(self.records[key]):2} {str(self.records[key])}\n'
+                self.comments += f'    # {key:25} - {whois_bits(key)} - {len(self.records[key]):2} {str(self.records[key])}\n'
         self.comments += "\n\n# soft whitelist\n\n"
         for key in rec_keys:
             if len(self.records[key]) > 1 and len(self.records[key]) <= 3 :
-                self.comments += f'    # {key:25} - {str(self.records[key])}\n'
+                self.comments += f'    # {key:25} - {whois_bits(key)} - {str(self.records[key])}\n'
         self.comments += "\n\n# individuals whitelist\n\n"
         for key in rec_keys:
             if len(self.records[key]) == 1 and self.records[key][0][1] >= 3:
-                self.comments += f'    # {key:25} - {self.records[key]}\n'
+                self.comments += f'    # {key:25} - {whois_bits(key)} - {self.records[key]}\n'
         self.comments += "\n\n# not used IPs to whitelist\n\n"
         for key in rec_keys:
             if len(self.records[key]) <= 1 and self.records[key][0][1] < 3:
-                self.comments += f'    # {key:25} - {self.records[key]}\n'
+                self.comments += f'    # {key:25} - {whois_bits(key)} - {self.records[key]}\n'
 
     def write_f2b_whitelist(self):
         """Save created comments and ignoreIPs settings to draft file."""
