@@ -226,18 +226,19 @@ class Whitelist:
 
         self.comments = "# File generated from script /usr/local/bin/gn_f2b_whitelist_sqlite.py\n"
         self.comments += "# Check and copy IP adresses to gn-ignoreip.local.\n\n"
+        self.comments = f'\n\n[DEFAULT]\n\nignoreip_local =\n\n'
         self.comments += "# Hard whitelist\n\n"
         for key in rec_keys:
             if len(self.records[key]) > 3:
-                self.comments += f'    # {key:25} - {whois_bits(key)} - {len(self.records[key]):2} {str(self.records[key])}\n'
+                self.comments += f'    {key:25} ; - {whois_bits(key):21} - {len(self.records[key]):2} {str(self.records[key])}\n'
         self.comments += "\n\n# soft whitelist\n\n"
         for key in rec_keys:
             if len(self.records[key]) > 1 and len(self.records[key]) <= 3 :
-                self.comments += f'    # {key:25} - {whois_bits(key)} - {str(self.records[key])}\n'
+                self.comments += f'    {key:25} ; - {whois_bits(key):21} - {str(self.records[key])}\n'
         self.comments += "\n\n# individuals whitelist\n\n"
         for key in rec_keys:
             if len(self.records[key]) == 1 and self.records[key][0][1] >= 3:
-                self.comments += f'    # {key:25} - {whois_bits(key)} - {self.records[key]}\n'
+                self.comments += f'    {key:25} ; - {whois_bits(key):21} - {self.records[key]}\n'
         self.comments += "\n\n# not used IPs to whitelist\n\n"
         for key in rec_keys:
             if len(self.records[key]) <= 1 and self.records[key][0][1] < 3:
@@ -252,7 +253,7 @@ class Whitelist:
 
         with open(IGNORE_DRAFT_FNAME, 'w') as file:
             file.write(self.comments)
-            file.write(self.ignores)
+            # file.write(self.ignores)
 
     def db_empty(self):
         """Delete all records form database - for debugging purposes only."""
