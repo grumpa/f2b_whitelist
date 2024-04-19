@@ -106,8 +106,6 @@ class Whitelist:
         self.db_open()
         # IP -> (user, count) dict created from db records
         self.records = dict()
-        # Text version of fail2ban ignore ips list
-        self.ignores = ''
         # Text comments for fail2ban ignore ips. IP, list of users and their counts.
         self.comments = ''
 
@@ -189,35 +187,6 @@ class Whitelist:
                 self.records[ip] = list()
             self.records[ip].append((username, count))
 
-    def create_f2b_whitelist(self):
-        """Create file with ignore ip list for fail2ban."""
-
-        rec_keys = list(self.records.keys())
-        rec_keys.sort()
-
-        # Use IPs with at least 2 users or individuals with more than 2 logins
-        keys_reduced = list()
-        for key in rec_keys:
-            if len(self.records[key]) > 1:
-                keys_reduced.append(key)
-            elif self.records[key][0][1] > 2:
-                keys_reduced.append(key)
-
-        self.ignores = f'\n\n[DEFAULT]\n\nignoreip_local =\n'
-        # Write maximally 10 IPs in one line
-        nl = 0
-        for nl in range(0, len(keys_reduced)//10):
-            s = nl * 10
-            e = s + 10
-            self.ignores += f'                 {" ".join(keys_reduced[s:e])} \n'
-        if len(keys_reduced) <= 10:
-            s = 0
-        else:
-            s = (nl + 1) * 10
-        if s <= len(keys_reduced):
-            self.ignores += f'                 {" ".join(keys_reduced[s:])} \n'
-        self.ignores +=  f'# IPs count: {len(keys_reduced)}\n'
-
     def create_f2b_comments(self):
         """Create comments text explaining why IPs are in ignore list."""
 
@@ -253,7 +222,6 @@ class Whitelist:
 
         with open(IGNORE_DRAFT_FNAME, 'w') as file:
             file.write(self.comments)
-            # file.write(self.ignores)
 
     def db_empty(self):
         """Delete all records form database - for debugging purposes only."""
@@ -275,5 +243,4 @@ if __name__ == '__main__':
     wl.process_new_log_records()
     wl.read_db_to_dict()
     wl.create_f2b_comments()
-    wl.create_f2b_whitelist()
     wl.write_f2b_whitelist()
