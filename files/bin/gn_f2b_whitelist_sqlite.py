@@ -118,9 +118,6 @@ class Whitelist:
         self.db_open()
         # IP -> (user, count) dict created from db records
         self.records = dict()
-        # Text comments for fail2ban ignore ips. IP, list of users and their counts.
-        self.comments = ''
-
 
     def _db_create(self):
 
@@ -205,32 +202,30 @@ class Whitelist:
         rec_keys = list(self.records.keys())
         rec_keys.sort()
 
-        self.comments = IGNORES_HEADER
-        self.comments += f'\n[DEFAULT]\n\nignoreip_local =\n\n'
-        self.comments += "# Hard whitelist\n\n"
-        for key in rec_keys:
-            if len(self.records[key]) > 3:
-                self.comments += f'    {key:25} ; - {whois_bits(key):21} - {len(self.records[key]):2} {str(self.records[key])}\n'
-        self.comments += "\n\n# soft whitelist\n\n"
-        for key in rec_keys:
-            if len(self.records[key]) > 1 and len(self.records[key]) <= 3 :
-                self.comments += f'    {key:25} ; - {whois_bits(key):21} - {str(self.records[key])}\n'
-        self.comments += "\n\n# individuals whitelist\n\n"
-        for key in rec_keys:
-            if len(self.records[key]) == 1 and self.records[key][0][1] >= 3:
-                self.comments += f'    {key:25} ; - {whois_bits(key):21} - {self.records[key]}\n'
-        self.comments += "\n\n# not used IPs to whitelist\n\n"
-        for key in rec_keys:
-            if len(self.records[key]) <= 1 and self.records[key][0][1] < 3:
-                self.comments += f'    # {key:25} - {whois_bits(key)} - {self.records[key]}\n'
-
         # Backup existing file
         if Path(IGNORE_DRAFT_FNAME).exists():
             Path(IGNORE_DRAFT_FNAME).rename(f'{IGNORE_DRAFT_FNAME}.bak')
 
         # Write fail2ban ignoreip draft file
         with open(IGNORE_DRAFT_FNAME, 'w') as file:
-            file.write(self.comments)
+            file.write(IGNORES_HEADER)
+            file.write(f'\n[DEFAULT]\n\nignoreip_local =\n\n')
+            file.write("# Hard whitelist\n\n")
+            for key in rec_keys:
+                if len(self.records[key]) > 3:
+                    file.write(f'    {key:25} ; - {whois_bits(key):21} - {len(self.records[key]):2} {str(self.records[key])}\n')
+            file.write("\n\n# soft whitelist\n\n")
+            for key in rec_keys:
+                if len(self.records[key]) > 1 and len(self.records[key]) <= 3 :
+                    file.write(f'    {key:25} ; - {whois_bits(key):21} - {str(self.records[key])}\n')
+            file.write("\n\n# individuals whitelist\n\n")
+            for key in rec_keys:
+                if len(self.records[key]) == 1 and self.records[key][0][1] >= 3:
+                    file.write(f'    {key:25} ; - {whois_bits(key):21} - {self.records[key]}\n')
+            file.write("\n\n# not used IPs to whitelist\n\n")
+            for key in rec_keys:
+                if len(self.records[key]) <= 1 and self.records[key][0][1] < 3:
+                    file.write(f'    # {key:25} - {whois_bits(key)} - {self.records[key]}\n')
 
     def db_empty(self):
         """Delete all records form database - for debugging purposes only."""
