@@ -8,10 +8,10 @@ in fail2ban jail ignoreip.
 Create file jail.d/gn-ignoreip.draft as source for gn-ignoreip.local
 with ingoreip_local variable.
 
-WorkFlow:
+What script does in steps:
 - read current mail log and write relevant data to sqlite DB
 - read DB and make file ingoreip variable with usable IPs
-- create comments to file explaining why those IPs are whitelisted
+  icluding comments explaining why those IPs are whitelisted
 
 Externalities:
 - /etc/rsyslog.d/gn_f2b_mail.conf
@@ -196,7 +196,7 @@ class Whitelist:
                 self.records[ip] = list()
             self.records[ip].append((username, count))
 
-    def create_f2b_comments(self):
+    def create_f2b_draft_file(self):
         """Create comments text explaining why IPs are in ignore list."""
 
         rec_keys = list(self.records.keys())
@@ -246,4 +246,4 @@ if __name__ == '__main__':
     wl.db_delete_old_records()
     wl.process_new_log_records()
     wl.read_db_to_dict()
-    wl.create_f2b_comments()
+    wl.create_f2b_draft_file()
