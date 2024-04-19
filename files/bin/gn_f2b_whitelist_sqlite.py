@@ -224,13 +224,11 @@ class Whitelist:
             if len(self.records[key]) <= 1 and self.records[key][0][1] < 3:
                 self.comments += f'    # {key:25} - {whois_bits(key)} - {self.records[key]}\n'
 
-    def write_f2b_whitelist(self):
-        """Save created comments and ignoreIPs settings to draft file."""
-
         # Backup existing file
         if Path(IGNORE_DRAFT_FNAME).exists():
             Path(IGNORE_DRAFT_FNAME).rename(f'{IGNORE_DRAFT_FNAME}.bak')
 
+        # Write fail2ban ignoreip draft file
         with open(IGNORE_DRAFT_FNAME, 'w') as file:
             file.write(self.comments)
 
@@ -254,4 +252,3 @@ if __name__ == '__main__':
     wl.process_new_log_records()
     wl.read_db_to_dict()
     wl.create_f2b_comments()
-    wl.write_f2b_whitelist()
