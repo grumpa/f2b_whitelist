@@ -79,10 +79,14 @@ IGNORES_HEADER = """
 
 def convert_time(time_from_log):
     """Convert timestamp from log file format to DB format"""
-    # time_from_log = 'Mar 25 14:27:47'
-    curr_year = time.localtime().tm_year
-    py_time = time.strptime(f'{curr_year} {time_from_log}', '%Y %b %d %H:%M:%S')
-    return time.strftime('%Y-%m-%dT%H:%M:%S', py_time)
+    # time_from_log = 'Mar 25 14:27:47' or '2024-03-25T14:27:47'
+    if time_from_log.startswith('2'):
+        tstamp = time_from_log[:19]
+    else:
+        curr_year = time.localtime().tm_year
+        py_time = time.strptime(f'{curr_year} {time_from_log[:15]}', '%Y %b %d %H:%M:%S')
+        tstamp = time.strftime('%Y-%m-%dT%H:%M:%S', py_time)
+    return tstamp
 
 def extract_between(text, first, last):
     """Extract text between two chars - brackets i.e.
@@ -148,7 +152,7 @@ class Whitelist:
         with open(LOG_FILENAME, 'r') as logfile:
             for line in logfile:
 
-                timestamp = convert_time(line[0:15])
+                timestamp = convert_time(line[0:19])
                 # Skip lines already processed in previous run of this script.
                 if timestamp <= max_timestamp:
                     continue
