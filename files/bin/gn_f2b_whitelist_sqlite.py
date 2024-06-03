@@ -2,6 +2,8 @@
 
 """Make whitelist for fail2ban
 
+usage: gn_f2b_whitelist_sqlite.py [mail.log]
+
 Read successful attempts login (imap, submission) and use their IPs
 in fail2ban jail ignoreip.
 
@@ -24,6 +26,7 @@ import sqlite3
 import time
 from datetime import datetime, timedelta
 import subprocess
+import sys
 
 # Oldest records in journal db table
 RECORDS_MAX_AGE = 30
@@ -31,9 +34,6 @@ RECORDS_MAX_AGE = 30
 DB_PATH = Path('/etc/fail2ban/jail.d/gn_whitelist.db')
 LOG_FILENAME = '/var/log/gn_f2b_mail.log'
 IGNORE_DRAFT_FNAME = '/etc/fail2ban/jail.d/gn-ignoreip.draft'
-
-if not Path(LOG_FILENAME).exists():
-    Path(LOG_FILENAME).touch(mode=0o640)
 
 QUERY = """
 SELECT ip, username, count(*) AS cnt
@@ -119,6 +119,8 @@ class Whitelist:
 
         self.db_conn = None
         self.db_cursor = None
+        if not Path(LOG_FILENAME).exists():
+            Path(LOG_FILENAME).touch(mode=0o640)
         self.db_open()
         # IP -> (user, count) dict created from db records
         self.records = dict()
@@ -245,6 +247,17 @@ class Whitelist:
 
 
 if __name__ == '__main__':
+
+    if len(sys.argv) == 2:
+        arg = sys.argv[1]
+        if arg in ('-h', '--help'):
+            print(__doc__)
+            sys.exit()
+        elif Path(arg).exists():
+            LOG_FILENAME = sys.argv[1]
+        else:
+            print("\n\nParameter must be existing log file. Or try --help.\n\n")
+            sys.exit()
 
     wl = Whitelist()
     wl.db_delete_old_records()
