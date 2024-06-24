@@ -5,7 +5,7 @@
     create
     rotate 1
     missingok
-    prerotate
-        /usr/local/bin/gn_f2b_whitelist_sqlite.py
-    endscript
+    # prerotate
+    #     /usr/local/bin/gn_f2b_whitelist_sqlite.py
+    # endscript
 }
