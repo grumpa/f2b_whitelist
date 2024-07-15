@@ -131,6 +131,7 @@ class Whitelist:
         db_conn = sqlite3.connect(str(DB_PATH))
         db_cursor = db_conn.cursor()
         db_cursor.execute('CREATE TABLE journal (timestamp str, ip str, username str, backend str);')
+        db_cursor.execute('CREATE TABLE known_ranges (ip str, mask int, last_seen str);')
         db_conn.commit()
         db_conn.close()
 
