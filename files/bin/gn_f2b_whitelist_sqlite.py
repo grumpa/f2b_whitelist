@@ -27,6 +27,7 @@ import time
 from datetime import datetime, timedelta
 import subprocess
 import sys
+import ipaddress
 
 # Oldest records in journal db table
 RECORDS_MAX_AGE = 30
@@ -186,9 +187,6 @@ class Whitelist:
                         ip = extract_between(part, find_item['ip_between'][0], find_item['ip_between'][1])
                 if not (ip and user):
                     continue
-                # IPv6 ? - use /64
-                if ip.count(':') > 4:
-                    ip = ':'.join(ip.split(':')[:4]) + '::/64'
                 backend = find_item['backend']
 
                 self.db_cursor.execute('INSERT INTO journal (timestamp, ip, username, backend) VALUES (?, ?, ?, ?)', (timestamp, ip, user, backend))
@@ -197,11 +195,39 @@ class Whitelist:
     def read_db_to_dict(self):
         """Read records from database to dictionary for easier processing"""
 
+        # read known ranges into a list
+        ranges = list()
+        used_ranges = set()
+        for qq in self.db_cursor.execute("SELECT ip, mask, last_seen FROM known_ranges;"):
+            ip_kr, prefix, last_seen = qq
+            ranges.append(f'{ip_kr}/{prefix}')
+
+        # Read records from db to dict
         for qq in self.db_cursor.execute(QUERY):
             ip, username, count = qq
+            # Is ip address in any of known ranges? -> reduce IP to net range
+            for ip_range in ranges:
+                ip_addr = ipaddress.ip_address(ip)
+                ip_netw = ipaddress.ip_network(ip_range)
+                if ip_addr in ip_netw:
+                    ip = ip_range
+                    used_ranges.add(ip_range)
+                    break
+            # IPv6 ? - Do not save all /128 but just /64
+            if ip.count(':') > 4:
+                ip = ':'.join(ip.split(':')[:4]) + '::/64'
             if not self.records.get(ip):
                 self.records[ip] = list()
             self.records[ip].append((username, count))
+
+        # Update DB last_seen field for used ranges.
+        for ip_range in used_ranges:
+            just_ip, just_mask = ip_range.split("/")
+            self.db_cursor.execute(
+                "UPDATE known_ranges SET last_seen = CURRENT_DATE WHERE ip = ? AND mask = ?",
+                (just_ip, just_mask)
+            )
+        self.db_conn.commit()
 
     def create_f2b_draft_file(self):
         """Create comments text explaining why IPs are in ignore list."""
